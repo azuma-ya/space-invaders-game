@@ -287,6 +287,7 @@ class Game {
         this.playerPosY = this.height - this.height / 10;
         this.debug = false;
         this.fps = 60;
+        this.bulletRadius = this.height / 50;
 
         if (window.matchMedia("(max-width: 768px)").matches) {
             this.canvas.addEventListener("touchmove", e => {
@@ -303,20 +304,22 @@ class Game {
         }
         this.restart_btn.addEventListener("click", e => this.restart());
         this.canvas.addEventListener("click", e => {
-            this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50));
+            this.fire();
         });
     }
     init() {
         this.score_dom.innerText = "00";
         this.states = "play";
         this.score = 0;
+        this.maxScore = window.localStorage.getItem("maxScore") || undefined;
         this.mouse = new Vec2(this.width / 2, this.height / 2);
         this.player = new Player(this, this.height / 10);
-        this.bullets = [new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50)];
+        this.bullets = [new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.bulletRadius)];
         this.grids = [new Grid(this)];
         this.stars = [];
         this.effects = [];
         this.gameOverLine = this.player.pos.y - this.player.r;
+        this.remainAmmo = 3;
         for (let i = 0; i < 100; i++) {
             this.stars.push(new Star(this, random(0, this.width), random(0, this.height)));
         }
@@ -339,7 +342,16 @@ class Game {
                 ctx.globalCompositeOperation = "destination-over";
                 this.stars.forEach(star => star.draw(this.canvas));
                 this._effectsUpdate(this.canvas);
+                ctx.fillStyle = "#fff";
+                for (let i = 0; i < this.remainAmmo; i++) {
+                    ctx.beginPath();
+                    ctx.arc(this.bulletRadius + i * this.bulletRadius * 1.5, this.height - this.bulletRadius, this.bulletRadius / 2, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
                 ctx.restore();
+                if (this.remainAmmo == 0 && this.bullets.length == 0) {
+                    this.gameOver();
+                }
                 break;
             case "gameOver":
                 ctx.clearRect(0, 0, this.width, this.height);
@@ -350,6 +362,7 @@ class Game {
                 ctx.fillText("GAME OVER", this.width / 2, this.height / 2);
                 ctx.font = "15px Poppins, sans-serif";
                 ctx.fillText(`SCORE   ${this.score}`, this.width / 2, this.height / 2 + 60);
+                ctx.fillText(`MAXSCORE   ${this.maxScore}`, this.width / 2, this.height / 2 + 80);
                 break;
         }
         requestAnimationFrame(this._loop.bind(this));
@@ -372,7 +385,7 @@ class Game {
                         this.effects.push(new Effect(this, invader.pos.x, invader.pos.y, invader.r / 3));
                     }
                 }
-                if (invader.pos.y + invader.r > this.gameOverLine) this.states = "gameOver";
+                if (invader.pos.y + invader.r > this.gameOverLine) this.gameOver();
             });
             grid.grid = grid.grid.filter(invader => !invader.destroy);
         });
@@ -383,12 +396,24 @@ class Game {
         this.effects.forEach(effect => effect.draw(canvas));
         this.effects = this.effects.filter(effect => !effect.destroy);
     }
+    fire() {
+        if (this.remainAmmo > 0) {
+            this.remainAmmo--;
+            this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.bulletRadius));
+        }
+    }
     restart() {
         this.init();
     }
     incrementScore() {
         this.score++;
         this.score_dom.innerText = this.score.toString().padStart(2, "0");
+    }
+    gameOver() {
+        this.states = "gameOver";
+        this.maxScore ? null : (this.maxScore = this.score);
+        this.score > this.maxScore ? (this.maxScore = this.score) : null;
+        window.localStorage.setItem("maxScore", this.maxScore);
     }
 }
 
