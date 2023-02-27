@@ -308,6 +308,7 @@ class Game {
         });
     }
     init() {
+        this._prevTimestamp = 0;
         this.score_dom.innerText = "00";
         this.states = "play";
         this.score = 0;
@@ -328,6 +329,14 @@ class Game {
         requestAnimationFrame(() => this._loop());
     }
     _loop(timestamp) {
+        const elapsedSec = (timestamp - this._prevTimestamp) / 1000;
+        const accuracy = 0.9;
+        const frameTime = 1 / this.fps * accuracy;
+        if (elapsedSec <= frameTime) {
+            requestAnimationFrame(() => this._loop());
+            return;
+        }
+        this._prevTimestamp = timestamp;
         const ctx = this.canvas.getContext("2d");
         switch (this.states) {
             case "play":
