@@ -33,7 +33,7 @@ class Vec2 {
     dot(v) {
         return this.x * v.x + this.y * v.y;
     }
-    reflect(w)//このベクトルの反射ベクトルを求める。引数は法線ベクトル
+    reflect(w) //このベクトルの反射ベクトルを求める。引数は法線ベクトル
     {
         let v = this;
         let cosTheta = v.mult(-1).dot(w) / (v.mult(-1).mag() * w.mag());
@@ -77,8 +77,12 @@ class SpriteActor extends Actor {
     }
     draw(canvas) {
         const ctx = canvas.getContext("2d");
-        const {x: imgX, y: imgY, w:
-            imgW, h: imgH} = this.sprite.rect;
+        const {
+            x: imgX,
+            y: imgY,
+            w: imgW,
+            h: imgH
+        } = this.sprite.rect;
         ctx.drawImage(this.sprite.img, imgX, imgY, imgW, imgH, this.pos.x - this.w / 2, this.pos.y - this.h / 2, this.w, this.h);
     }
 }
@@ -189,16 +193,16 @@ class Grid {
         this.game = game;
         this.grid = [];
         this.speed = 10;
-        this.pos = new Vec2(0, 0);
-        this.vel = new Vec2(this.speed, 0);
         this.cellWidth = this.game.height / 10;
         this.width = 8 * this.cellWidth;
         this.height = 4 * this.cellWidth;
-        this.nextPosY = this.pos.y + this.height + this.cellWidth;
-        this.isDown = false;
+        this.pos = new Vec2(0, -this.height);
+        this.vel = new Vec2(0, this.speed);
+        this.nextPosY = 0;
+        this.isDown = true;
         for (let x = 0; x < 8; x++) {
             for (let y = 0; y < 4; y++) {
-                this.grid.push(new Invader(game, x * this.cellWidth + this.cellWidth / 2, y * this.cellWidth + this.cellWidth / 2, this.vel.x, this.vel.y, this.cellWidth / 2.5));
+                this.grid.push(new Invader(game, x * this.cellWidth + this.cellWidth / 2 + this.pos.x, y * this.cellWidth + this.cellWidth / 2 + this.pos.y, this.vel.x, this.vel.y, this.cellWidth / 2.5));
             }
         }
     }
@@ -215,10 +219,10 @@ class Grid {
                 this.invaderUpdate();
             }
         } else if (this.isDown) {
-            if (this.pos.y + this.height > this.nextPosY) {
+            if (this.pos.y > this.nextPosY) {
                 this.isDown = false;
                 this.nextPosY += this.cellWidth;
-                if (this.pos.x < 0) this.vel = new Vec2(this.speed, 0);
+                if (this.pos.x <= 0) this.vel = new Vec2(this.speed, 0);
                 else if (this.pos.x + this.width >= this.game.width) this.vel = new Vec2(-this.speed, 0);
                 this.invaderUpdate();
             }
@@ -296,11 +300,11 @@ class Game {
                 this.mouse = new Vec2(e.offsetX, e.offsetY);
                 // console.log(e);
             });
-            this.restart_btn.addEventListener("click", e => this.restart());
-            this.canvas.addEventListener("click", e => {
-                this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50));
-            });
         }
+        this.restart_btn.addEventListener("click", e => this.restart());
+        this.canvas.addEventListener("click", e => {
+            this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50));
+        });
     }
     init() {
         this.score_dom.innerText = "00";
@@ -395,5 +399,3 @@ game.start();
 function random(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-
-
