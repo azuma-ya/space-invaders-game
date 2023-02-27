@@ -284,14 +284,23 @@ class Game {
         this.debug = false;
         this.fps = 60;
 
-        this.canvas.addEventListener("mousemove", e => {
-            this.mouse = new Vec2(e.offsetX, e.offsetY);
-            // console.log(e);
-        });
-        this.restart_btn.addEventListener("click", e => this.restart());
-        this.canvas.addEventListener("click", e => {
-            this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50));
-        });
+        if (window.matchMedia("(max-width: 768px)").matches) {
+            this.canvas.addEventListener("touchmove", e => {
+                let {clientX: x, clientY: y} = e.touches[0];
+                let {left, top} = this.canvas.getBoundingClientRect();
+                this.mouse = new Vec2(x - left, y - top);
+                // console.log(e);
+            });
+        } else {
+            this.canvas.addEventListener("mousemove", e => {
+                this.mouse = new Vec2(e.offsetX, e.offsetY);
+                // console.log(e);
+            });
+            this.restart_btn.addEventListener("click", e => this.restart());
+            this.canvas.addEventListener("click", e => {
+                this.bullets.push(new Bullet(this, this.player.pos.x, this.player.pos.y - 10, 0, -200, this.height / 50));
+            });
+        }
     }
     init() {
         this.score_dom.innerText = "00";
